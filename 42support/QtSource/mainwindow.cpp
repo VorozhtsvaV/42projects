@@ -40,15 +40,21 @@ ui(new Ui::MainWindow)
     ui->Plot21->graph(0)->setPen(QColor(Qt::red));
     ui->Plot21->addGraph(); //plotKm
     ui->Plot21->graph(1)->setPen(QColor(Qt::blue));
+
     ui->Plot22->addGraph();//plotWheelPower
     ui->Plot22->graph(0)->setPen(QColor(Qt::red));
     ui->Plot22->addGraph(); //plotKm
     ui->Plot22->graph(1)->setPen(QColor(Qt::blue));
 
-    ui->Plot31->addGraph();//plotScMode
+    ui->Plot31->addGraph();//plotKm
     ui->Plot31->graph(0)->setPen(QColor(Qt::red));
+    ui->Plot31->addGraph();//plotKm
+    ui->Plot31->graph(1)->setPen(QColor(Qt::blue));
+
     ui->Plot32->addGraph();//plotWorkAndZRV
     ui->Plot32->graph(0)->setPen(QColor(Qt::red));
+    ui->Plot32->addGraph();
+    ui->Plot32->graph(1)->setPen(QColor(Qt::blue));
 
     uiPlotSampleCounter=0;
     uiPlotMaxCounter = 10;
@@ -128,28 +134,76 @@ void ToPlot(double SimTime){
         }
 
         if(true){
+            double distance = 0;
+            double dx = SC[0].PosN[0] - SC[1].PosN[0];
+            double dy = SC[0].PosN[1] - SC[1].PosN[1];
+            double dz = SC[0].PosN[2] - SC[1].PosN[2];
+            distance = sqrt(dx*dx + dy*dy + dz*dz) / 1000; // в км
+            extUi->Plot22->graph(0)->addData(SimTime, distance);
+            extUi->Plot22->rescaleAxes();
+            extUi->Plot22->replot();
+        }
+
+        if(true){
             double magVelN0 = 0;
             double magVelN1 = 0;
             magVelN0 = MAGV(SC[0].VelN)/1000;
             if(Nsc>1)
                 magVelN1 = MAGV(SC[1].VelN)/1000;
-            extUi->Plot22->graph(0)->addData(SimTime, magVelN1);
-            extUi->Plot22->graph(1)->addData(SimTime, magVelN0);
-            extUi->Plot22->rescaleAxes();
-            extUi->Plot22->replot();
-        }
-
-        if(false){
-            extUi->Plot31->graph(0)->addData(SimTime, 0);
+            extUi->Plot31->graph(0)->addData(SimTime, magVelN1);
+            extUi->Plot31->graph(1)->addData(SimTime, magVelN0);
             extUi->Plot31->rescaleAxes();
             extUi->Plot31->replot();
         }
-
         if(true){
-            extUi->Plot32->graph(0)->addData(SimTime, SC[0].Eclipse);
+            #define PI 3.14159265358979323846
+            #define RAD2DEG (180.0/PI)
+
+            double phaseAngleDeg = 0;
+            double relativePosition = 0;
+            double perigeeDiffDeg = 0; // Разница аргументов перигея
+
+            if (Nsc >= 2) {
+                // 1. Фазовый угол (как было)
+                double diff = Orb[0].anom - Orb[1].anom;
+
+                // Нормализуем в диапазон [-π, π]
+                while (diff > PI) diff -= 2*PI;
+                while (diff < -PI) diff += 2*PI;
+
+                // Фазовый угол (0-180°)
+                phaseAngleDeg = fabs(diff) * RAD2DEG;
+
+                // Информация о направлении
+                relativePosition = (diff > 0) ? 1 : -1;
+
+                // 2. Разница аргументов перигея (НОВАЯ ЛИНИЯ)
+                double perigeeDiff = Orb[0].ArgP - Orb[1].ArgP;
+
+                // Нормализуем в диапазон [-180°, 180°]
+                while (perigeeDiff > PI) perigeeDiff -= 2*PI;
+                while (perigeeDiff < -PI) perigeeDiff += 2*PI;
+
+                perigeeDiffDeg = perigeeDiff * RAD2DEG;
+            }
+
+            // Фазовый угол со знаком
+            double signedPhaseAngle = phaseAngleDeg * relativePosition;
+
+            // Добавляем данные на график
+            extUi->Plot32->graph(0)->addData(SimTime, signedPhaseAngle); // Фазовый угол (красный)
+            extUi->Plot32->graph(1)->addData(SimTime, perigeeDiffDeg);    // Разница перигеев (синий)
+
             extUi->Plot32->rescaleAxes();
             extUi->Plot32->replot();
         }
+
+
+        //if(true){
+            //extUi->Plot32->graph(0)->addData(SimTime, SC[0].Eclipse);
+            //extUi->Plot32->rescaleAxes();
+            //extUi->Plot32->replot();
+        //}
         QApplication::processEvents();
     }
 }

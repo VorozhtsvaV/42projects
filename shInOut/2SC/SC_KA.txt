@@ -102,13 +102,13 @@ NONE                        ! Drag/Jitter Input File Name
 2                           ! Number of Thrusters
 ==============================  Thr 0  =================================
 PULSED                      ! Mode (PULSED or PROPORTIONAL)
- 5.0                        ! Thrust Force (N)
+ 20.0                        ! Thrust Force (N)
 -1.0  0.0  0.0              ! Thrust Axis 
 0                           ! Body
 0                           ! Node
 ==============================  Thr 1  =================================
 PULSED                      ! Mode (PULSED or PROPORTIONAL)
- 5.0                        ! Thrust Force (N)
+ 20.0                        ! Thrust Force (N)
 1.0  0.0  0.0              ! Thrust Axis 
 0                           ! Body
 0                           ! Node
